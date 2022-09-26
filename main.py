@@ -1,7 +1,9 @@
 import configparser
+
+import tweepy
 from dateutil import parser
-from file_util import ig_add_worksheet, fb_add_worksheet, create_workbook
-from service_util import get_fb_posts_by_date, get_ig_posts_by_date
+from file_util import ig_add_worksheet, fb_add_worksheet, twitter_add_worksheet, create_workbook
+from service_util import get_fb_posts_by_date, get_ig_posts_by_date, get_twitter_posts_by_date
 
 
 def fetch_export_fb_posts():
@@ -74,8 +76,49 @@ def fetch_export_ig_posts():
     ig_posts_file.close()
 
 
+def fetch_export_twitter_posts():
+    twitter_config = configparser.ConfigParser()
+    twitter_config.read('config.ini')
+
+    twitter_start_list = ['08/1/2022', '09/1/2022', '10/1/2022']
+    twitter_end_list = ['09/1/2022', '10/1/2022', '11/1/2022']
+
+    twitter_api_key = twitter_config['twitter']['api_key']
+    twitter_api_key_secret = twitter_config['twitter']['api_key_secret']
+
+    twitter_access_token = twitter_config['twitter']['access_token']
+    twitter_access_token_secret = twitter_config['twitter']['access_token_secret']
+
+    twitter_auth = tweepy.OAuthHandler(twitter_api_key, twitter_api_key_secret)
+    twitter_auth.set_access_token(twitter_access_token, twitter_access_token_secret)
+
+    twitter_api = tweepy.API(twitter_auth)
+    screen_name = "DTIRegion4A"
+    twitter_posts_file = create_workbook('twitter_post_new.xlsx')
+    i = 0
+    for twitter_start in twitter_start_list:
+        print('Twitter: ' + twitter_start)
+        twit_start = parser.parse(twitter_start)
+        twit_end = parser.parse(twitter_end_list[i])
+        monthly_tweets = []
+
+        for tweet in tweepy.Cursor(twitter_api.user_timeline, screen_name=screen_name).items():
+            if twit_end.timestamp() > tweet.created_at.timestamp() > twit_start.timestamp():
+                monthly_tweets.append(tweet)
+
+            if tweet.created_at.timestamp() < twit_start.timestamp():
+                break
+
+        ws_name = twit_start.strftime('%B')
+        twitter_add_worksheet(twitter_posts_file, monthly_tweets, ws_name)
+        i = i + 1
+
+    twitter_posts_file.close()
+
+
 if __name__ == '__main__':
     print('Processing...')
     fetch_export_fb_posts()
     fetch_export_ig_posts()
+    fetch_export_twitter_posts()
     print('Done!')

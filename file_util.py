@@ -45,6 +45,24 @@ def ig_add_worksheet(ig_workbook, ig_posts, ws_name):
     ig_worksheet.write(row, 0, 'Total Count: ' + str(counter))
 
 
+def twitter_add_worksheet(twitter_workbook, twitter_posts, ws_name):
+    twitter_worksheet = twitter_workbook.add_worksheet(ws_name)
+
+    twitter_worksheet.write(0, 0, 'Date Posted')
+    twitter_worksheet.write(0, 1, 'Post Link')
+
+    row = 1
+    counter = 0
+
+    for tweet in twitter_posts:
+        twitter_worksheet.write(row, 0, tweet.created_at.strftime("%m/%d/%Y"))
+        twitter_worksheet.write(row, 1, 'https://twitter.com/twitter/statuses/' + str(tweet.id))
+        row += 1
+        counter += 1
+
+    twitter_worksheet.write(row, 0, 'Total Count: ' + str(counter))
+
+
 # old version / unused
 def export_excel(fb_posts, ws_name):
     fb_workbook = xlsxwriter.Workbook('fb_posts.xlsx')
